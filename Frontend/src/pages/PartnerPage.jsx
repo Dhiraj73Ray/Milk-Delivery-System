@@ -6,7 +6,7 @@ import LogDeliveryForm from "../components/LogDeliveryForm"
 import MyLogs from "../components/MyLogs"
 
 function PartnerPage() {
-  const { logout, partnerID } = useAuth()
+  const { logout, partnerName } = useAuth()
   const navigate = useNavigate()
   const [activeSection, setActiveSection] = useState("customers")
 
@@ -15,55 +15,62 @@ function PartnerPage() {
     navigate("/login")
   }
 
-  const buttonStyle = {
-    padding: '8px 16px',
-    margin: '0 5px',
-    cursor: 'pointer',
-    backgroundColor: '#f0f0f0',
-    borderWidth: '1px',        // ← instead of 'border'
-    borderStyle: 'solid',      // ← instead of 'border'
-    borderColor: '#ccc',       // ← instead of 'border'
-    borderRadius: '4px'
-  }
-
-  const activeButtonStyle = {
-    ...buttonStyle,
-    backgroundColor: '#007bff',
-    color: 'white',
-    borderColor: '#007bff'     // ← now this can update safely
-  }
-
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h1>Partner Dashboard</h1>
-        <button onClick={handleLogout} style={buttonStyle}>Logout</button>
+    <div className="min-h-screen bg-gray-50 p-6">
+      {/* Top Desktop Navigation Bar */}
+      <div className="flex justify-between items-center bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Partner Dashboard</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Welcome back, {partnerName || "Partner"}</p>
+        </div>
+        <button 
+          onClick={handleLogout} 
+          className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded transition-colors shadow-sm"
+        >
+          Logout
+        </button>
       </div>
 
-      <div style={{ marginBottom: '20px' }}>
+      {/* Tab Switcher Layout */}
+      <div className="flex space-x-2 mb-6">
         <button
           onClick={() => setActiveSection("customers")}
-          style={activeSection === "customers" ? activeButtonStyle : buttonStyle}
+          className={`px-4 py-2 font-medium rounded transition-colors ${
+            activeSection === "customers" 
+              ? "bg-[#2c3e50] text-white" 
+              : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+          }`}
         >
-          My Customers
+          👥 My Customers
         </button>
         <button
           onClick={() => setActiveSection("log")}
-          style={activeSection === "log" ? activeButtonStyle : buttonStyle}
+          className={`px-4 py-2 font-medium rounded transition-colors ${
+            activeSection === "log" 
+              ? "bg-[#2c3e50] text-white" 
+              : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+          }`}
         >
-          Log Delivery
+          📝 Log Delivery
         </button>
         <button
           onClick={() => setActiveSection("logs")}
-          style={activeSection === "logs" ? activeButtonStyle : buttonStyle}
+          className={`px-4 py-2 font-medium rounded transition-colors ${
+            activeSection === "logs" 
+              ? "bg-[#2c3e50] text-white" 
+              : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+          }`}
         >
-          My Logs
+          📋 My Logs
         </button>
       </div>
 
-      {activeSection === "customers" && <MyCustomersTable />}
-      {activeSection === "log" && <LogDeliveryForm />}
-      {activeSection === "logs" && <MyLogs />}
+      {/* Active Component Wrapper */}
+      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        {activeSection === "customers" && <MyCustomersTable />}
+        {activeSection === "log" && <LogDeliveryForm />}
+        {activeSection === "logs" && <MyLogs />}
+      </div>
     </div>
   )
 }
