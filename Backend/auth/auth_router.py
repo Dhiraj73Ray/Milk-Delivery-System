@@ -76,8 +76,8 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
 @router.post("/users")
 def create_user(
     payload: CreateUserRequest,
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(require_admin)
+    db: Session = Depends(get_db)
+    # current_user: dict = Depends(require_admin)
 ):
     exists = db.query(Users).filter(Users.phone == payload.phone).first()
     if exists:
