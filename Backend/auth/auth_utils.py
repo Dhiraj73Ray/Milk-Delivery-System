@@ -1,11 +1,10 @@
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
-import bcrypt  # <-- Change passlib to native bcrypt
+import bcrypt  # <-- Using raw bcrypt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from database import get_db
-from models import DeliveryPartners
 import os
 from dotenv import load_dotenv
 
@@ -13,15 +12,15 @@ load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 2  # 2 hours = 120 minutes
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 2  # 2 hours
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
-# --- New Production-Safe Password Helpers (Native Bcrypt) ---
+# --- Production-Safe Password Hashing ---
 def hash_password(password: str) -> str:
     """
-    Hashes a plain text password using native bcrypt.
+    Hashes a plain text password using native bcrypt to avoid passlib crashes.
     """
     password_bytes = password.encode('utf-8')
     salt = bcrypt.gensalt()
@@ -44,7 +43,6 @@ def verify_password(plain: str, hashed: str) -> bool:
 # --- Token Helper ---
 def create_access_token(data: dict) -> str:
     to_encode = data.copy()
-    # Note: converted to utcnow() cleanly or left as-is to preserve your existing flow
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode["exp"] = expire
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
@@ -86,4 +84,4 @@ def require_delivery_partner(current_user: dict = Depends(get_current_user)):
     return current_user
 
 def require_any(current_user: dict = Depends(get_current_user)):
-    return current_user  # just validates token, any role allowed
+    return current_user
