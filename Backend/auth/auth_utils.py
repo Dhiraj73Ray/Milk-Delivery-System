@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+import bcrypt  # <-- Change passlib to native bcrypt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
@@ -13,25 +13,38 @@ load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
-# ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours = 1440 minutes
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 2  # 2 hours = 120 minutes
-# ACCESS_TOKEN_EXPIRE_MINUTES = 1  # 1 minutes
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
-# --- Password Helpers ---
+# --- New Production-Safe Password Helpers (Native Bcrypt) ---
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    """
+    Hashes a plain text password using native bcrypt.
+    """
+    password_bytes = password.encode('utf-8')
+    salt = bcrypt.gensalt()
+    hashed_bytes = bcrypt.hashpw(password_bytes, salt)
+    return hashed_bytes.decode('utf-8')
+
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    """
+    Verifies a plain text password against the stored bcrypt hash string.
+    """
+    try:
+        plain_bytes = plain.encode('utf-8')
+        hashed_bytes = hashed.encode('utf-8')
+        return bcrypt.checkpw(plain_bytes, hashed_bytes)
+    except Exception:
+        return False
 
 
 # --- Token Helper ---
 def create_access_token(data: dict) -> str:
     to_encode = data.copy()
+    # Note: converted to utcnow() cleanly or left as-is to preserve your existing flow
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode["exp"] = expire
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
