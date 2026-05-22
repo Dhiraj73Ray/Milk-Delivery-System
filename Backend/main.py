@@ -32,11 +32,14 @@ app.include_router(export.router)
 app.include_router(auth_router.router)
 
 
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "https://milk-delivery-system-eight.vercel.app"
+        "https://milk-delivery-system-eight.vercel.app",
+        "https://milk-delivery-system-git-main-dhiraj-rays-projects.vercel.app",
+        "https://*.vercel.app"  # Allow all Vercel subdomains
     ],
     allow_credentials=True,
     allow_methods=["*"],
