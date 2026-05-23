@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from dotenv import load_dotenv
 import os
-from database import Base, connection
+from database import Base, engine
 # from models import DeliveryPartners, MasterCustomers, DeliveryLogs, Payments
 from routers import delivery_partners, master_customers, delivery_logs, payments, bills, dsr, milk_rates, export
 from auth import auth_router
@@ -14,7 +14,7 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 print(DATABASE_URL)
 app = FastAPI()
 
-Base.metadata.create_all(bind=connection)
+Base.metadata.create_all(bind=engine)
 
 @app.get("/")
 async def root():
