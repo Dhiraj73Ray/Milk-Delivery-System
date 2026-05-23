@@ -24,7 +24,7 @@ function UsersTable() {
     setLoading(true)
     api.get('/auth/users')
       .then(res => {
-        console.log('Users data:', res.data) // Debug: Check what data comes from API
+        // console.log('Users data:', res.data) // Debug: Check what data comes from API
         setUsers(res.data)
         setLoading(false)
       })
