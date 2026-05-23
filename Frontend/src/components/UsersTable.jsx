@@ -54,6 +54,27 @@ function UsersTable() {
     return partners.filter(partner => !partnerIdsWithUsers.includes(partner.id))
   }
 
+  // Helper to accurately process date formats across DB standards
+  const formatDate = (user) => {
+    // Check for created_at from your API
+    const dateVal = user.created_at
+    if (!dateVal) return '-'
+
+    try {
+      const parsedDate = new Date(dateVal)
+      if (isNaN(parsedDate.getTime())) return '-'
+
+      // Format as: DD/MM/YYYY or MM/DD/YYYY based on your preference
+      return parsedDate.toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      })
+    } catch (error) {
+      return '-'
+    }
+  }
+
   // Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -157,7 +178,7 @@ function UsersTable() {
   const formatDate = (user) => {
     const dateVal = user.created_at || user.createdAt
     if (!dateVal) return '-'
-    
+
     const parsedDate = new Date(dateVal)
     return isNaN(parsedDate.getTime()) ? '-' : parsedDate.toLocaleDateString()
   }
@@ -178,7 +199,7 @@ function UsersTable() {
   }
 
   const availablePartners = getAvailablePartners()
-  
+
   // Calculate summary stats
   const adminCount = users.filter(u => u.role === 'admin').length
   const partnerCount = users.filter(u => u.role === 'delivery_partner').length
@@ -268,6 +289,7 @@ function UsersTable() {
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Phone</th>
                   <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Role</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Partner</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Created At</th>
                   <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
@@ -289,11 +311,10 @@ function UsersTable() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                        user.role === 'admin' 
-                          ? 'bg-purple-100 text-purple-700' 
-                          : 'bg-green-100 text-green-700'
-                      }`}>
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${user.role === 'admin'
+                        ? 'bg-purple-100 text-purple-700'
+                        : 'bg-green-100 text-green-700'
+                        }`}>
                         {user.role === 'admin' ? '👑 Admin' : '🚚 Delivery'}
                       </span>
                     </td>
@@ -308,6 +329,11 @@ function UsersTable() {
                       ) : (
                         <span className="text-sm text-gray-400">-</span>
                       )}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="text-sm text-gray-500 font-mono">
+                        {formatDate(user)}
+                      </span>
                     </td>
                     <td className="px-4 py-3 text-center">
                       <div className="flex items-center justify-center gap-2">
@@ -336,7 +362,7 @@ function UsersTable() {
               </tbody>
             </table>
           </div>
-          
+
           {/* Footer */}
           <div className="border-t border-gray-100 px-4 py-3 bg-gray-50">
             <div className="flex justify-between items-center">
@@ -361,7 +387,7 @@ function UsersTable() {
       {/* Modal Overlay */}
       {showForm && (
         <>
-          <div 
+          <div
             className="fixed inset-0 bg-black/50 z-40"
             onClick={resetForm}
           />
@@ -408,11 +434,10 @@ function UsersTable() {
                           phone: ''
                         })
                       }}
-                      className={`py-3 rounded-xl font-medium transition-all duration-200 active:scale-95 flex items-center justify-center gap-2 ${
-                        formData.role === 'admin'
-                          ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
+                      className={`py-3 rounded-xl font-medium transition-all duration-200 active:scale-95 flex items-center justify-center gap-2 ${formData.role === 'admin'
+                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
                     >
                       <span>👑</span>
                       <span>Admin</span>
@@ -427,11 +452,10 @@ function UsersTable() {
                         })
                         setPartnerChanged(false)
                       }}
-                      className={`py-3 rounded-xl font-medium transition-all duration-200 active:scale-95 flex items-center justify-center gap-2 ${
-                        formData.role === 'delivery_partner'
-                          ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-md'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
+                      className={`py-3 rounded-xl font-medium transition-all duration-200 active:scale-95 flex items-center justify-center gap-2 ${formData.role === 'delivery_partner'
+                        ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-md'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
                     >
                       <span>🚚</span>
                       <span>Delivery</span>

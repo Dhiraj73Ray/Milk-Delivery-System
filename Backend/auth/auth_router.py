@@ -111,6 +111,7 @@ def get_all_users(
             "phone": u.phone,
             "role": u.role,
             "delivery_partner_id": u.delivery_partner_id
+            "created_at": u.created_at.isoformat() if u.created_at else None
         }
         for u in users
     ]
@@ -169,9 +170,13 @@ def update_user(
         user.role = payload.role
     if payload.delivery_partner_id is not None:
         user.delivery_partner_id = payload.delivery_partner_id
-    if payload.password is not None and payload.password.strip():  # ← ADD THIS
+    if payload.password is not None and payload.password.strip():
         user.hashed_password = hash_password(payload.password)
 
     db.commit()
     db.refresh(user)
-    return {"message": "User updated successfully", "user_id": user.id}
+    return {
+        "message": "User updated successfully", 
+        "user_id": user.id,
+        "created_at": user.created_at.isoformat() if user.created_at else None  # ✅ Add this
+    }
