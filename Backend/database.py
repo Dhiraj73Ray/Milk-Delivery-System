@@ -28,9 +28,17 @@ if DATABASE_URL and "localhost" not in DATABASE_URL:
     }
 
 # Create engine with custom production config
-connection = create_engine(DATABASE_URL, connect_args=connect_args)
+# connection = create_engine(DATABASE_URL, connect_args=connect_args)
+# The fix: Add pool_pre_ping and pool_recycle parameters
+engine = create_engine(
+    DATABASE_URL,
+    pool_pre_ping=True,      # Checks if connection is alive before running a query
+    pool_recycle=300,        # Closes and recreates connections older than 5 minutes
+    pool_size=5,             # Restricts pool sizes on free tier environments
+    max_overflow=10
+)
 
-SessionLocal = sessionmaker(bind=connection, autoflush=False, autocommit=False)
+SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 def get_db():
     db = SessionLocal()
