@@ -136,7 +136,14 @@ function LoginPage() {
                 "Login"
               )}
             </button>
-
+              <div className="mb-4">
+  <div className="bg-red-100 p-4 rounded-lg mb-2 animate-shake">
+    This should shake on load!
+  </div>
+  <div className="bg-blue-100 p-4 rounded-lg overflow-x-auto scrollbar-hide">
+    <div className="w-[500px]">This horizontal scroll should have NO scrollbar visible!</div>
+  </div>
+</div>
             {/* Forgot Password - optional */}
             <div className="text-center">
               <button className="text-sm text-blue-600 hover:text-blue-700">
