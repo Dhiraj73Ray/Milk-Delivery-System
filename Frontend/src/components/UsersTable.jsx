@@ -334,7 +334,7 @@ function UsersTable() {
                   </tr>
                 ))}
               </tbody>
-            </tr>
+            </table>
           </div>
           
           {/* Footer */}
