@@ -24,6 +24,7 @@ function UsersTable() {
     setLoading(true)
     api.get('/auth/users')
       .then(res => {
+        console.log('Users data:', res.data) // Debug: Check what data comes from API
         setUsers(res.data)
         setLoading(false)
       })
@@ -54,23 +55,24 @@ function UsersTable() {
     return partners.filter(partner => !partnerIdsWithUsers.includes(partner.id))
   }
 
-  // Helper to accurately process date formats across DB standards
+  // ✅ SINGLE formatDate function (keep only this one)
   const formatDate = (user) => {
     // Check for created_at from your API
-    const dateVal = user.created_at
+    const dateVal = user?.created_at
     if (!dateVal) return '-'
 
     try {
       const parsedDate = new Date(dateVal)
       if (isNaN(parsedDate.getTime())) return '-'
 
-      // Format as: DD/MM/YYYY or MM/DD/YYYY based on your preference
+      // Format as: DD/MM/YYYY
       return parsedDate.toLocaleDateString('en-IN', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric'
       })
     } catch (error) {
+      console.error('Date parsing error:', error)
       return '-'
     }
   }
@@ -174,15 +176,6 @@ function UsersTable() {
     return partner ? partner.name : '-'
   }
 
-  // Helper to accurately process date formats across DB standards
-  // const formatDate = (user) => {
-  //   const dateVal = user.created_at || user.createdAt
-  //   if (!dateVal) return '-'
-
-  //   const parsedDate = new Date(dateVal)
-  //   return isNaN(parsedDate.getTime()) ? '-' : parsedDate.toLocaleDateString()
-  // }
-
   // Reset form
   const resetForm = () => {
     setShowForm(false)
@@ -282,18 +275,18 @@ function UsersTable() {
       {users.length > 0 && (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Phone</th>
                   <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Role</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Partner</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Created At</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Created At</th>
                   <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-100 bg-white">
                 {users.map(user => (
                   <tr key={user.id} className="hover:bg-gray-50 transition-colors duration-150">
                     <td className="px-4 py-3">
