@@ -13,17 +13,26 @@ function LoginPage() {
   const navigate = useNavigate()
 
 
+  useEffect(() => {
+    if (token && role) {
+      if (role === "admin") {
+        navigate("/dashboard", { replace: true })
+      } else if (role === "delivery_partner") {
+        navigate("/partner", { replace: true })
+      }
+    }
+  }, [token, role, navigate])
 
   // Add this useEffect
-useEffect(() => {
-  if (error) {
-    const timer = setTimeout(() => {
-      setError(null);
-    }, 5000); // Error disappears after 5 seconds
-    
-    return () => clearTimeout(timer);
-  }
-}, [error]);
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError(null);
+      }, 5000); // Error disappears after 5 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   async function handleLogin() {
     if (!phone || !password) {
