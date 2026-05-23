@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import api from "../api"
@@ -12,6 +12,19 @@ function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
 
+
+
+  // Add this useEffect
+useEffect(() => {
+  if (error) {
+    const timer = setTimeout(() => {
+      setError(null);
+    }, 5000); // Error disappears after 5 seconds
+    
+    return () => clearTimeout(timer);
+  }
+}, [error]);
+
   async function handleLogin() {
     if (!phone || !password) {
       setError("Please enter both phone and password")
@@ -20,7 +33,7 @@ function LoginPage() {
 
     setIsLoading(true)
     setError(null)
-    
+
     try {
       const response = await api.post("/auth/login", {
         phone: phone,
@@ -31,7 +44,7 @@ function LoginPage() {
       const role = response.data.role
 
       login(token, role)
-      
+
       if (role === "admin") {
         navigate("/dashboard")
       } else {
@@ -110,7 +123,7 @@ function LoginPage() {
 
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl flex items-center gap-2">
+              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl flex items-center gap-2 animate-shake">
                 <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -136,14 +149,7 @@ function LoginPage() {
                 "Login"
               )}
             </button>
-              <div className="mb-4">
-  <div className="bg-red-100 p-4 rounded-lg mb-2 animate-shake">
-    This should shake on load!
-  </div>
-  <div className="bg-blue-100 p-4 rounded-lg overflow-x-auto scrollbar-hide">
-    <div className="w-[500px]">This horizontal scroll should have NO scrollbar visible!</div>
-  </div>
-</div>
+
             {/* Forgot Password - optional */}
             <div className="text-center">
               <button className="text-sm text-blue-600 hover:text-blue-700">
