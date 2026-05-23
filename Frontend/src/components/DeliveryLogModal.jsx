@@ -18,9 +18,8 @@ function DeliveryLogModal({ isOpen, onClose, log, onSave, mode, partners, custom
 
     useEffect(() => {
         if (!isOpen) return
-        // console.log(log)
+        
         if (mode === 'edit' && log) {
-            // Existing log - edit mode
             const pId = log.delivery_partner_id
             setPartnerId(pId)
 
@@ -49,11 +48,9 @@ function DeliveryLogModal({ isOpen, onClose, log, onSave, mode, partners, custom
             }
         }
         else if (mode === 'create_from_dsr' && log) {
-            // Create from DSR (historical entry - preserve date and time from DSR)
             const pId = log.delivery_partner_id
             setPartnerId(pId)
 
-            // Get the date from the DSR row (the actual delivery date)
             let formattedDate = ''
             if (log.delivery_date) {
                 formattedDate = log.delivery_date
@@ -62,7 +59,6 @@ function DeliveryLogModal({ isOpen, onClose, log, onSave, mode, partners, custom
                 formattedDate = `${year}-${monthNum}-${String(log.day).padStart(2, '0')}`
             }
 
-            // Get the time from DSR if available, otherwise leave empty for user to enter
             let formattedTime = ''
             if (log.delivery_time_raw) {
                 formattedTime = log.delivery_time_raw
@@ -72,15 +68,12 @@ function DeliveryLogModal({ isOpen, onClose, log, onSave, mode, partners, custom
 
             quantityInput.setValue(log.liters || '');
 
-
             setFormData({
                 customer_id: log.customer_id || '',
                 delivery_date: formattedDate,
-                delivery_time: formattedTime,  // Use historical time, NOT current time
+                delivery_time: formattedTime,
                 delivery_status: log.delivery_status || 'done',
-                // quantity_delivered: log.liters || ''
                 quantity_delivered: quantityInput
-
             })
 
             if (pId) {
@@ -90,12 +83,10 @@ function DeliveryLogModal({ isOpen, onClose, log, onSave, mode, partners, custom
             }
         }
         else if (mode === 'create' && !log) {
-            // Blank create mode (from Add button - for current/future entries)
             const now = new Date()
             const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
 
             quantityInput.setValue('0.5');
-
 
             setPartnerId(null)
             setFormData({
@@ -103,9 +94,7 @@ function DeliveryLogModal({ isOpen, onClose, log, onSave, mode, partners, custom
                 delivery_date: new Date().toISOString().split('T')[0],
                 delivery_time: currentTime,
                 delivery_status: 'done',
-                // quantity_delivered: ''
                 quantity_delivered: quantityInput
-
             })
             setAvailableCustomers([])
         }
@@ -132,15 +121,11 @@ function DeliveryLogModal({ isOpen, onClose, log, onSave, mode, partners, custom
 
         try {
             if (mode === 'edit' && log && log.log_id) {
-                // For EDIT - send only fields that can be updated
                 const updateData = {}
 
                 if (formData.delivery_status !== log.delivery_status) {
                     updateData.delivery_status = formData.delivery_status
                 }
-                // if (parseFloat(formData.quantity_delivered) !== parseFloat(log.liters)) {
-                //     updateData.quantity_delivered = parseFloat(formData.quantity_delivered)
-                // }
                 if (finalQuantity !== parseFloat(log.liters)) {
                     updateData.quantity_delivered = finalQuantity;
                 }
@@ -151,24 +136,19 @@ function DeliveryLogModal({ isOpen, onClose, log, onSave, mode, partners, custom
                     updateData.delivery_date = formData.delivery_date
                 }
 
-                // Only make the API call if there's something to update
                 if (Object.keys(updateData).length > 0) {
                     await api.patch(`/logs/${log.log_id}`, updateData)
                 }
 
             } else if (mode === 'create_from_dsr' || mode === 'create') {
-                // For CREATE - send ONLY the fields the backend expects
                 const submitData = {
                     delivery_partner_id: partnerId,
                     customer_id: parseInt(formData.customer_id),
                     delivery_status: formData.delivery_status,
-                    // quantity_delivered: parseFloat(formData.quantity_delivered),
                     quantity_delivered: finalQuantity,
                     delivery_date: formData.delivery_date || null,
                     delivery_time: formData.delivery_time || null
                 }
-
-                // DO NOT send delivery_date and delivery_time for create, but send for create_from_dsr
 
                 await api.post('/logs', submitData)
             }
@@ -193,28 +173,60 @@ function DeliveryLogModal({ isOpen, onClose, log, onSave, mode, partners, custom
 
     if (!isOpen) return null
 
-    return (
-        <div style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000,
-            display: 'flex', alignItems: 'center', justifyContent: 'center'
-        }}>
-            <div style={{
-                backgroundColor: 'white', padding: '20px', borderRadius: '8px',
-                maxWidth: '500px', width: '90%'
-            }}>
-                <h3>{mode === 'edit' ? 'Edit Delivery Log' : mode === 'create_from_dsr' ? 'Create Delivery Log' : 'Add Delivery Log'}</h3>
+    // Get modal title
+    const getModalTitle = () => {
+        if (mode === 'edit') return 'Edit Delivery Log'
+        if (mode === 'create_from_dsr') return 'Create Delivery Log'
+        return 'Add Delivery Log'
+    }
 
-                <form onSubmit={handleSubmit}>
+    // Get modal icon
+    const getModalIcon = () => {
+        if (mode === 'edit') return '✏️'
+        if (mode === 'create_from_dsr') return '📝'
+        return '➕'
+    }
+
+    return (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto animate-slideUp">
+                {/* Modal Header */}
+                <div className="sticky top-0 bg-gradient-to-r from-orange-600 to-red-600 rounded-t-2xl p-5 text-white">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur text-xl">
+                            {getModalIcon()}
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-bold">{getModalTitle()}</h3>
+                            <p className="text-sm text-orange-100 mt-0.5">
+                                {mode === 'edit' ? 'Update delivery information' : 'Record new delivery entry'}
+                            </p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="absolute top-4 right-4 w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center hover:bg-white/30 active:scale-95 transition-all duration-200"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                {/* Modal Body */}
+                <form onSubmit={handleSubmit} className="p-5 space-y-4">
+                    {/* Partner Selection */}
                     {(mode === 'create' || mode === 'create_from_dsr') && (
-                        <div style={{ marginBottom: '10px' }}>
-                            <label>Partner: </label>
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                Delivery Partner *
+                            </label>
                             <select
                                 value={partnerId || ''}
                                 onChange={(e) => handlePartnerChange(e.target.value)}
                                 required
-                                disabled={mode === 'create_from_dsr'} // Disable if coming from DSR
-                                style={{ width: '100%', padding: '5px' }}
+                                disabled={mode === 'create_from_dsr'}
+                                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition duration-200 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
                             >
                                 <option value="">Select Partner</option>
                                 {partners.map(p => (
@@ -224,103 +236,161 @@ function DeliveryLogModal({ isOpen, onClose, log, onSave, mode, partners, custom
                         </div>
                     )}
 
-                    <div style={{ marginBottom: '10px' }}>
-                        <label>Customer: </label>
+                    {/* Customer Selection */}
+                    <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Customer *
+                        </label>
                         <select
                             value={formData.customer_id}
                             onChange={(e) => setFormData(prev => ({ ...prev, customer_id: e.target.value }))}
                             required
                             disabled={mode === 'create' && !partnerId}
-                            style={{ width: '100%', padding: '5px' }}
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition duration-200 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
                         >
                             <option value="">Select Customer</option>
                             {availableCustomers.map(c => (
                                 <option key={c.id} value={c.id}>{c.name}</option>
                             ))}
                         </select>
+                        {mode === 'create' && !partnerId && (
+                            <p className="text-xs text-orange-600 mt-1.5">
+                                Please select a partner first
+                            </p>
+                        )}
                     </div>
-                    {(mode === 'create_from_dsr') && (
-                        <>
-                            <div style={{ marginBottom: '10px' }}>
-                                <label>Date: </label>
+
+                    {/* Date Field */}
+                    {(mode === 'create_from_dsr' || mode === 'edit') && (
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                Delivery Date
+                            </label>
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
                                 <input
                                     type="date"
                                     value={formData.delivery_date}
                                     onChange={(e) => setFormData(prev => ({ ...prev, delivery_date: e.target.value }))}
-                                    required={mode === 'create_from_dsr'} // Required for historical entries
-                                    style={{ width: '100%', padding: '5px' }}
+                                    required={mode === 'create_from_dsr'}
+                                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition duration-200"
                                 />
                             </div>
+                        </div>
+                    )}
 
-                            <div style={{ marginBottom: '10px' }}>
-                                <label>Time: </label>
+                    {/* Time Field */}
+                    {(mode === 'create_from_dsr' || mode === 'edit') && (
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                Delivery Time
+                            </label>
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
                                 <input
                                     type="time"
                                     value={formData.delivery_time}
                                     onChange={(e) => setFormData(prev => ({ ...prev, delivery_time: e.target.value }))}
-                                    style={{ width: '100%', padding: '5px' }}
+                                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition duration-200"
                                 />
                             </div>
-                        </>
+                        </div>
                     )}
 
-                    {mode === 'edit' && (
-                        <>
-                            <div style={{ marginBottom: '10px' }}>
-                                <label>Date: </label>
-                                <input
-                                    type="date"
-                                    value={formData.delivery_date}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, delivery_date: e.target.value }))}
-                                    style={{ width: '100%', padding: '5px' }}
-                                />
-                            </div>
-
-                            <div style={{ marginBottom: '10px' }}>
-                                <label>Time: </label>
-                                <input
-                                    type="time"
-                                    value={formData.delivery_time}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, delivery_time: e.target.value }))}
-                                    style={{ width: '100%', padding: '5px' }}
-                                />
-                            </div>
-                        </>
-                    )}
-
-                    <div style={{ marginBottom: '10px' }}>
-                        <label>Status: </label>
+                    {/* Status Field */}
+                    <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Delivery Status
+                        </label>
                         <select
                             value={formData.delivery_status}
                             onChange={(e) => setFormData(prev => ({ ...prev, delivery_status: e.target.value }))}
-                            style={{ width: '100%', padding: '5px' }}
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition duration-200 bg-white"
                         >
-                            <option value="done">Done</option>
-                            <option value="pending">Pending</option>
-                            <option value="cancelled">Cancelled</option>
+                            <option value="done">
+                                ✅ Done - Successfully delivered
+                            </option>
+                            <option value="pending">
+                                ⏳ Pending - Awaiting delivery
+                            </option>
+                            <option value="cancelled">
+                                ❌ Cancelled - Not delivered
+                            </option>
                         </select>
                     </div>
 
-                    <div style={{ marginBottom: '10px' }}>
-                        <label>Quantity (Litres): </label>
-                        <input
-                            {...quantityInput.inputProps}
-                            style={{ width: '100%', padding: '5px' }}
-                        />
-
+                    {/* Quantity Field */}
+                    <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Quantity (Litres) *
+                        </label>
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                </svg>
+                            </div>
+                            <input
+                                {...quantityInput.inputProps}
+                                type="number"
+                                step="0.1"
+                                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition duration-200"
+                                placeholder="Enter quantity in litres"
+                            />
+                        </div>
                         {formData.delivery_status === 'done' && parseFloat(quantityInput.value) <= 0 && (
-                            <p style={{ color: 'red', fontSize: '12px', margin: '5px 0 0 0' }}>
+                            <p className="text-xs text-red-600 mt-1.5 flex items-center gap-1">
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
                                 Quantity must be greater than 0 for completed deliveries
                             </p>
                         )}
                     </div>
 
-                    {error && <p style={{ color: 'red' }}>{error}</p>}
+                    {/* Error Message */}
+                    {error && (
+                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center gap-2 animate-shake">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span className="text-sm">{error}</span>
+                        </div>
+                    )}
 
-                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                        <button type="button" onClick={onClose}>Cancel</button>
-                        <button type="submit" disabled={loading}>
-                            {loading ? 'Saving...' : (mode === 'edit' ? 'Update' : 'Create')}
+                    {/* Action Buttons */}
+                    <div className="flex gap-3 pt-4">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="flex-1 px-4 py-2.5 text-gray-700 bg-gray-100 rounded-xl font-medium hover:bg-gray-200 active:scale-95 transition-all duration-200"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="flex-1 px-4 py-2.5 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-xl font-medium hover:from-orange-700 hover:to-red-700 active:scale-95 transition-all duration-200 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {loading ? (
+                                <div className="flex items-center justify-center gap-2">
+                                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    <span>Saving...</span>
+                                </div>
+                            ) : (
+                                mode === 'edit' ? 'Update Delivery' : 'Create Delivery'
+                            )}
                         </button>
                     </div>
                 </form>
