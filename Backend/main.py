@@ -39,6 +39,7 @@ app.add_middleware(
         "http://localhost:5173",
         "https://milk-delivery-system-eight.vercel.app",
         "https://milk-delivery-system-git-main-dhiraj-rays-projects.vercel.app",
+        "https://prem-mds.vercel.app",
         "https://*.vercel.app"  # Allow all Vercel subdomains
     ],
     allow_credentials=True,

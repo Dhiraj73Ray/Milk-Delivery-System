@@ -19,8 +19,6 @@ function UsersTable() {
   })
   const [partnerChanged, setPartnerChanged] = useState(false)
 
-
-
   // Fetch users
   const fetchUsers = () => {
     setLoading(true)
@@ -49,12 +47,10 @@ function UsersTable() {
 
   // Get available partners (partners without user accounts, except current one)
   const getAvailablePartners = () => {
-    // Get all partner IDs that already have user accounts
     const partnerIdsWithUsers = users
       .filter(user => user.delivery_partner_id && user.id !== editingId)
       .map(user => user.delivery_partner_id)
 
-    // Filter partners: exclude those that already have user accounts
     return partners.filter(partner => !partnerIdsWithUsers.includes(partner.id))
   }
 
@@ -68,7 +64,6 @@ function UsersTable() {
     }
     setLoading(true)
 
-    // Prepare data
     const submitData = {
       name: formData.name,
       phone: formData.phone,
@@ -78,22 +73,17 @@ function UsersTable() {
         : null
     }
 
-    // Only include password if provided (for create or password change)
     if (formData.password) {
       submitData.password = formData.password
     }
 
     try {
       if (editingId) {
-        // Check if partner was changed and password is empty
         if (partnerChanged && !formData.password) {
           throw new Error('Password is required because partner was changed')
         }
-
-        // Update - exclude password if empty (but only allow empty if partner not changed)
         await api.patch(`/auth/users/${editingId}`, submitData)
       } else {
-        // Create - password is required
         if (!formData.password) {
           throw new Error('Password is required for new user')
         }
@@ -145,12 +135,11 @@ function UsersTable() {
 
   // Handle edit
   const handleEdit = (user) => {
-    console.log('Editing user:', user.name, 'Phone:', user.phone, 'Partner ID:', user.delivery_partner_id)
     setEditingId(user.id)
     setFormData({
-      name: user.name,
-      phone: user.phone,
-      password: '',  // Empty password means don't change
+      name: user.name || '',
+      phone: user.phone || '',
+      password: '',
       role: user.role,
       delivery_partner_id: user.delivery_partner_id || ''
     })
@@ -162,6 +151,16 @@ function UsersTable() {
   const getPartnerName = (partnerId) => {
     const partner = partners.find(p => p.id === partnerId)
     return partner ? partner.name : '-'
+  }
+
+  // Helper to accurately process date formats across DB standards
+  const formatDate = (user) => {
+    // Check both snake_case and camelCase fallbacks from FastAPI serialization
+    const dateVal = user.created_at || user.createdAt
+    if (!dateVal) return '-'
+    
+    const parsedDate = new Date(dateVal)
+    return isNaN(parsedDate.getTime()) ? '-' : parsedDate.toLocaleDateString()
   }
 
   // Reset form
@@ -182,11 +181,16 @@ function UsersTable() {
   const availablePartners = getAvailablePartners()
 
   return (
-    <div>
-      <h2>Users</h2>
-
-      {/* Add User Button */}
-      <button onClick={() => setShowForm(true)}>+ Add User</button>
+    <div className="p-4">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold text-gray-800">Users Management</h2>
+        <button 
+          onClick={() => setShowForm(true)}
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded shadow-sm text-sm"
+        >
+          + Add User
+        </button>
+      </div>
 
       {/* Add/Edit Form Modal */}
       {showForm && (
@@ -198,89 +202,88 @@ function UsersTable() {
               left: '50%',
               transform: 'translate(-50%, -50%)',
               backgroundColor: 'white',
-              padding: '20px',
-              border: '1px solid #ccc',
+              padding: '25px',
+              border: '1px solid #e2e8f0',
               borderRadius: '8px',
               zIndex: 1000,
-              maxWidth: '400px',
-              width: '90%'
+              maxWidth: '420px',
+              width: '90%',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
             }}
           >
-            <h3>{editingId ? 'Edit User' : 'Add New User'}</h3>
+            <h3 className="text-lg font-bold text-gray-700 mb-4">{editingId ? 'Edit User Account' : 'Add New User Account'}</h3>
             <form onSubmit={handleSubmit}>
-              {/* Role Selection - Always at top */}
-              <div style={{ marginBottom: '10px' }}>
-                <label>Role: </label>
-                <label style={{ marginLeft: '10px' }}>
-                  <input
-                    type="radio"
-                    name="role"
-                    value="admin"
-                    checked={formData.role === 'admin'}
-                    onChange={(e) => {
-                      setFormData({
-                        ...formData,
-                        role: e.target.value,
-                        delivery_partner_id: ''
-                      })
-                      // Reset name/phone when switching to admin
-                      if (e.target.value === 'admin') {
-                        setFormData(prev => ({
-                          ...prev,
+              
+              {/* Role Selection */}
+              <div className="mb-4">
+                <span className="block text-sm font-medium text-gray-600 mb-1">Account Role:</span>
+                <div className="flex items-center space-x-4">
+                  <label className="flex items-center text-sm cursor-pointer">
+                    <input
+                      type="radio"
+                      name="role"
+                      value="admin"
+                      className="mr-1.5"
+                      checked={formData.role === 'admin'}
+                      onChange={(e) => {
+                        setFormData({
+                          ...formData,
+                          role: e.target.value,
+                          delivery_partner_id: '',
                           name: '',
                           phone: ''
-                        }))
-                      }
-                    }}
-                  /> Admin
-                </label>
-                <label style={{ marginLeft: '10px' }}>
-                  <input
-                    type="radio"
-                    name="role"
-                    value="delivery_partner"
-                    checked={formData.role === 'delivery_partner'}
-                    onChange={(e) => {
-                      setFormData({
-                        ...formData,
-                        role: e.target.value,
-                        delivery_partner_id: ''
-                      })
-                      setPartnerChanged(false)
-                    }}
-                  /> Delivery Partner
-                </label>
+                        })
+                      }}
+                    /> Admin
+                  </label>
+                  <label className="flex items-center text-sm cursor-pointer">
+                    <input
+                      type="radio"
+                      name="role"
+                      value="delivery_partner"
+                      className="mr-1.5"
+                      checked={formData.role === 'delivery_partner'}
+                      onChange={(e) => {
+                        setFormData({
+                          ...formData,
+                          role: e.target.value,
+                          delivery_partner_id: ''
+                        })
+                        setPartnerChanged(false)
+                      }}
+                    /> Delivery Partner
+                  </label>
+                </div>
               </div>
 
-              {/* For Delivery Partner: Show partner dropdown + auto-fill */}
+              {/* Delivery Partner Options */}
               {formData.role === 'delivery_partner' ? (
                 <>
-                  <div style={{ marginBottom: '10px' }}>
-                    <label>Select Partner: </label>
+                  <div className="mb-3">
+                    <label className="block text-sm font-medium text-gray-600 mb-1">Select Partner profile:</label>
                     <select
                       value={formData.delivery_partner_id}
+                      className="w-full border border-gray-300 rounded p-2 text-sm bg-white"
                       onChange={(e) => {
                         const selectedId = e.target.value
                         const selectedPartner = partners.find(p => p.id === parseInt(selectedId))
 
                         if (selectedPartner) {
-                          // Auto-fill name and phone from selected partner
                           const isPartnerChanged = selectedId !== formData.delivery_partner_id
                           setFormData({
                             ...formData,
                             delivery_partner_id: selectedId,
                             name: selectedPartner.name,
                             phone: selectedPartner.phone,
-                            password: ''  // Clear password when partner changes
+                            password: ''
                           })
                           if (isPartnerChanged && editingId) {
                             setPartnerChanged(true)
                           }
                         }
                       }}
-                      style={{ width: '100%', padding: '5px' }}
                     >
-                      <option value="">-- Select Partner --</option>
+                      <option value="">-- Select Partner Profile --</option>
                       {availablePartners.map(partner => (
                         <option key={partner.id} value={partner.id}>
                           {partner.name} {editingId && partner.id === parseInt(formData.delivery_partner_id) ? '(current)' : ''}
@@ -288,92 +291,102 @@ function UsersTable() {
                       ))}
                     </select>
                     {availablePartners.length === 0 && (
-                      <small style={{ color: '#ff6600' }}>
-                        No available partners. All partners already have user accounts.
-                      </small>
+                      <p className="text-xs text-orange-500 mt-1">
+                        All mapped delivery partners already have local user accounts setup.
+                      </p>
                     )}
                   </div>
 
-                  {/* Name field - auto-filled */}
-                  <div style={{ marginBottom: '10px' }}>
-                    <label>Name: </label>
+                  <div className="mb-3">
+                    <label className="block text-sm font-medium text-gray-600 mb-1">Name:</label>
                     <input
                       type="text"
                       value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      required
-                      style={{ width: '100%', padding: '5px' }}
-                      placeholder="Auto-filled from partner"
+                      disabled
+                      className="w-full border border-gray-200 bg-gray-50 rounded p-2 text-sm text-gray-500 cursor-not-allowed"
+                      placeholder="Linked profile name"
                     />
                   </div>
 
-                  {/* Phone field - auto-filled */}
-                  <div style={{ marginBottom: '10px' }}>
-                    <label>Phone: </label>
+                  <div className="mb-3">
+                    <label className="block text-sm font-medium text-gray-600 mb-1">Phone String:</label>
                     <input
                       type="tel"
                       value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      required
-                      style={{ width: '100%', padding: '5px' }}
-                      placeholder="Auto-filled from partner"
+                      disabled
+                      className="w-full border border-gray-200 bg-gray-50 rounded p-2 text-sm text-gray-500 cursor-not-allowed"
+                      placeholder="Linked profile contact phone"
                     />
                   </div>
                 </>
               ) : (
-                // For Admin: Show name and phone inputs
+                /* Admin Route Handling - Fields are now properly editable */
                 <>
-                  <div style={{ marginBottom: '10px' }}>
-                    <label>Name: </label>
+                  <div className="mb-3">
+                    <label className="block text-sm font-medium text-gray-600 mb-1">Admin Name:</label>
                     <input
                       type="text"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       required
-                      style={{ width: '100%', padding: '5px' }}
+                      className="w-full border border-gray-300 rounded p-2 text-sm"
                     />
                   </div>
 
-                  <div style={{ marginBottom: '10px' }}>
-                    <label>Phone: </label>
+                  <div className="mb-3">
+                    <label className="block text-sm font-medium text-gray-600 mb-1">Admin Phone:</label>
                     <input
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       required
-                      style={{ width: '100%', padding: '5px' }}
+                      className="w-full border border-gray-300 rounded p-2 text-sm"
                     />
                   </div>
                 </>
               )}
 
-              {/* Password field - always visible */}
-              <div style={{ marginBottom: '10px' }}>
-                <label>Password: {partnerChanged && editingId && <span style={{ color: 'red' }}>*</span>}</label>
+              {/* Password Config */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-600 mb-1">
+                  Password: {partnerChanged && editingId && <span className="text-red-500">*</span>}
+                </label>
                 <input
                   type="password"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder={editingId ? (partnerChanged ? 'Required - password must be updated' : 'Leave blank to keep current') : 'Required'}
-                  required={!editingId || partnerChanged}  // ← Make required if partner changed
-                  style={{ width: '100%', padding: '5px' }}
+                  placeholder={editingId ? (partnerChanged ? 'Required - update password' : 'Blank to keep current') : 'Required'}
+                  required={!editingId || partnerChanged}
+                  className="w-full border border-gray-300 rounded p-2 text-sm"
                 />
                 {editingId && !partnerChanged && (
-                  <small style={{ color: '#666' }}>Leave blank to keep current password</small>
+                  <p className="text-xs text-gray-400 mt-1">Leave empty to preserve existing hashed password strings.</p>
                 )}
                 {editingId && partnerChanged && (
-                  <small style={{ color: 'red' }}>⚠️ Partner changed - you must enter a new password</small>
+                  <p className="text-xs text-red-500 mt-1 font-medium">⚠️ Partner target swapped: You must set a new baseline password.</p>
                 )}
               </div>
 
-              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
-                <button type="button" onClick={resetForm}>Cancel</button>
-                <button type="submit" disabled={loading}>
-                  {loading ? 'Saving...' : (editingId ? 'Update' : 'Create')}
+              <div className="flex gap-2 justify-end mt-6">
+                <button 
+                  type="button" 
+                  onClick={resetForm}
+                  className="px-3 py-1.5 border border-gray-300 hover:bg-gray-50 rounded text-sm font-medium text-gray-600"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={loading}
+                  className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded text-sm shadow-sm"
+                >
+                  {loading ? 'Saving...' : (editingId ? 'Update Account' : 'Create Account')}
                 </button>
               </div>
             </form>
           </div>
+          
+          {/* Backdrop Shadow overlay */}
           <div
             style={{
               position: 'fixed',
@@ -381,7 +394,7 @@ function UsersTable() {
               left: 0,
               right: 0,
               bottom: 0,
-              backgroundColor: 'rgba(0,0,0,0.5)',
+              backgroundColor: 'rgba(0,0,0,0.4)',
               zIndex: 999
             }}
             onClick={resetForm}
@@ -389,37 +402,65 @@ function UsersTable() {
         </>
       )}
 
-      {loading && <p>Loading...</p>}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && (
+        <div className="p-3 mb-4 bg-red-50 border border-red-200 text-red-600 rounded text-sm font-medium">
+          {error}
+        </div>
+      )}
 
-      {/* Users Table */}
-      {!loading && (
-        <div style={{ overflowX: 'auto', marginTop: '20px' }}>
-          <p>Total Users: {users.length}</p>
-          <table border="1" style={{ borderCollapse: 'collapse', width: '60%' }}>
+      {/* Users Data Grid Layout */}
+      {loading && users.length === 0 ? (
+        <p className="text-sm text-gray-500 italic">Refreshing database logs...</p>
+      ) : (
+        <div className="overflow-x-auto bg-white border border-gray-200 rounded-lg shadow-sm mt-2">
+          <div className="p-3 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">System Accounts Log</span>
+            <span className="text-xs font-bold px-2 py-0.5 bg-gray-200 text-gray-700 rounded-full">Total: {users.length}</span>
+          </div>
+          <table className="w-full text-left border-collapse text-sm">
             <thead>
-              <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Phone</th>
-                <th>Role</th>
-                <th>Partner</th>
-                <th>Created At</th>
-                <th>Actions</th>
+              <br/>
+              <tr className="bg-gray-100 text-gray-600 text-xs uppercase font-medium border-b border-gray-200">
+                <th className="p-3 font-semibold">ID</th>
+                <th className="p-3 font-semibold">Name</th>
+                <th className="p-3 font-semibold">Phone</th>
+                <th className="p-3 font-semibold">Role</th>
+                <th className="p-3 font-semibold">Partner Link</th>
+                <th className="p-3 font-semibold">Created At</th>
+                <th className="p-3 font-semibold text-right">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-100 text-gray-700">
               {users.map(user => (
-                <tr key={user.id}>
-                  <td>{user.id}</td>
-                  <td>{user.name}</td>
-                  <td>{user.phone}</td>
-                  <td>{user.role}</td>
-                  <td>{user.role === 'delivery_partner' ? getPartnerName(user.delivery_partner_id) : '-'}</td>
-                  <td>{user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}</td>
-                  <td>
-                    <button onClick={() => handleEdit(user)} style={{ marginRight: '5px' }}>Edit</button>
-                    <button onClick={() => handleDelete(user.id)} style={{ color: 'red' }}>Delete</button>
+                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="p-3 text-gray-400 font-mono text-xs">{user.id}</td>
+                  <td className="p-3 font-medium text-gray-900">{user.name}</td>
+                  <td className="p-3">{user.phone}</td>
+                  <td className="p-3">
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                      user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-green-100 text-green-700'
+                    }`}>
+                      {user.role}
+                    </span>
+                  </td>
+                  <td className="p-3 text-gray-500">
+                    {user.role === 'delivery_partner' ? getPartnerName(user.delivery_partner_id) : '-'}
+                  </td>
+                  {/* Clean safe data handler mapping target checks */}
+                  <td className="p-3 text-gray-500">{formatDate(user)}</td>
+                  <td className="p-3 text-right space-x-2">
+                    <button 
+                      onClick={() => handleEdit(user)} 
+                      className="text-blue-600 hover:text-blue-800 font-medium text-xs"
+                    >
+                      Edit
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(user.id)} 
+                      className="text-red-600 hover:text-red-800 font-medium text-xs"
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))}
