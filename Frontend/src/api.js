@@ -2,8 +2,8 @@ import axios from "axios"
 
 const api = axios.create({
   // baseURL: "http://localhost:8000",
-  // baseURL: "https://milk-delivery-api-wyue.onrender.com",
-  baseURL: "https://prem-mds.vercel.app/",
+  baseURL: "https://milk-delivery-api-wyue.onrender.com",
+  // baseURL: "https://prem-mds.vercel.app/",
 })
 
 api.interceptors.request.use((config) => {
