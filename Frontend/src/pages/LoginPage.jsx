@@ -1,6 +1,5 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import axios from "axios"
 import { useAuth } from "../context/AuthContext"
 import api from "../api"
 
@@ -14,6 +13,11 @@ function LoginPage() {
   const navigate = useNavigate()
 
   async function handleLogin() {
+    if (!phone || !password) {
+      setError("Please enter both phone and password")
+      return
+    }
+
     setIsLoading(true)
     setError(null)
     
@@ -44,22 +48,22 @@ function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        {/* Card - optimized for mobile touch */}
+        <div className="bg-white rounded-3xl shadow-xl p-6 md:p-8">
           {/* Logo/Header */}
           <div className="text-center mb-8">
-            <div className="mx-auto w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="mx-auto w-20 h-20 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
             </div>
-            <h2 className="text-3xl font-bold text-gray-800">MDS Login</h2>
-            <p className="text-gray-500 mt-2">Sign in to your account</p>
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-800">MDS Login</h2>
+            <p className="text-gray-500 text-sm md:text-base mt-2">Sign in to your account</p>
           </div>
 
           {/* Form */}
           <div className="space-y-5">
-            {/* Phone Input */}
+            {/* Phone Input - larger touch target for mobile */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Phone Number
@@ -71,11 +75,12 @@ function LoginPage() {
                   </svg>
                 </div>
                 <input
-                  type="text"
+                  type="tel"
+                  inputMode="numeric"
                   placeholder="Enter your phone number"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                  className="w-full pl-10 pr-4 py-4 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                   onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
                 />
               </div>
@@ -97,7 +102,7 @@ function LoginPage() {
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                  className="w-full pl-10 pr-4 py-4 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                   onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
                 />
               </div>
@@ -105,19 +110,19 @@ function LoginPage() {
 
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl flex items-center gap-2 animate-shake">
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl flex items-center gap-2">
+                <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span className="text-sm">{error}</span>
               </div>
             )}
 
-            {/* Login Button */}
+            {/* Login Button - big touch target for thumbs */}
             <button
               onClick={handleLogin}
               disabled={isLoading}
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-lg"
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-semibold text-base md:text-lg active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 shadow-lg"
             >
               {isLoading ? (
                 <div className="flex items-center justify-center gap-2">
@@ -132,11 +137,11 @@ function LoginPage() {
               )}
             </button>
 
-            {/* Demo Credentials Hint */}
-            <div className="mt-6 pt-4 border-t border-gray-200">
-              <p className="text-xs text-center text-gray-500">
-                Demo credentials? Contact your administrator
-              </p>
+            {/* Forgot Password - optional */}
+            <div className="text-center">
+              <button className="text-sm text-blue-600 hover:text-blue-700">
+                Forgot password?
+              </button>
             </div>
           </div>
         </div>
