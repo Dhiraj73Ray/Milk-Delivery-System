@@ -175,13 +175,13 @@ function UsersTable() {
   }
 
   // Helper to accurately process date formats across DB standards
-  const formatDate = (user) => {
-    const dateVal = user.created_at || user.createdAt
-    if (!dateVal) return '-'
+  // const formatDate = (user) => {
+  //   const dateVal = user.created_at || user.createdAt
+  //   if (!dateVal) return '-'
 
-    const parsedDate = new Date(dateVal)
-    return isNaN(parsedDate.getTime()) ? '-' : parsedDate.toLocaleDateString()
-  }
+  //   const parsedDate = new Date(dateVal)
+  //   return isNaN(parsedDate.getTime()) ? '-' : parsedDate.toLocaleDateString()
+  // }
 
   // Reset form
   const resetForm = () => {
