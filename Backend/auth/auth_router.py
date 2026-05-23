@@ -111,7 +111,7 @@ def get_all_users(
             "phone": u.phone,
             "role": u.role,
             "delivery_partner_id": u.delivery_partner_id,
-            "created_at": u.created_at.isoformat() if u.created_at else None
+            "created_at": u.created_at.isoformat(),
         }
         for u in users
     ]
